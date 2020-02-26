@@ -6,7 +6,11 @@ import (
 	"github.com/go-easylog/el"
 )
 
+//インスタンス変数
 var i, j int = 1, 2
+
+//インスタンス定数
+const TEL = "0123456789"
 
 func main() {
 	el.SetLogLevel(el.TRACE)
@@ -41,6 +45,18 @@ func main() {
 	var s string
 	//phpのsprintfに近い表記
 	fmt.Printf("%v %v %v %q\n", i, f, b, s)
+
+	const EMAIL = "umanari145@gmail.com"
+	//当然代入するとエラー
+	//EMAIL = "aaaa"
+	fmt.Println("EMAIL 定数" + EMAIL)
+	fmt.Println("TEL (インスタンス)定数" + TEL)
+
+	fmt.Println("defer")
+
+	deferMethod()
+
+	deferMethod2()
 }
 
 /**
@@ -50,4 +66,16 @@ func multiArgs(x, y string) (string, string) {
 	x2 := x + "aaa"
 	y2 := y + "aaa"
 	return x2, y2
+}
+
+func deferMethod() {
+	defer fmt.Println("順番は最初だが関数終了時点で発動")
+	fmt.Println("通常の関数")
+}
+
+func deferMethod2() {
+	defer func() {
+		fmt.Println("クロージャ的な使い方でのdefer")
+	}()
+	fmt.Println("通常の関数")
 }
