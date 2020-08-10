@@ -6,6 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"sort"
+	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-easylog/el"
@@ -37,12 +39,21 @@ func GetAllHTMLData(URL string) {
 	allPageNo := getPageNo(reader)
 	el.Info(`--全page数 ` + allPageNo + `--`)
 
-	//allPageNoInt, _ := strconv.Atoi(allPageNo)
-	//	for i := 0; i <= allPageNoInt; i++ {
-	for i := 0; i <= 2; i++ {
+	allPageNoInt, _ := strconv.Atoi(allPageNo)
+	for i := 1; i <= allPageNoInt; i++ {
+		//for i := 1; i <= 2; i++ {
+		strInt := strconv.Itoa(i)
+		el.Info(`--page ` + strInt + `--`)
 		GetCommentData(URL, i)
 	}
-	fmt.Println(Comments)
+
+	sort.SliceStable(Comments, func(i, j int) bool { return Comments[i].No < Comments[j].No })
+
+	for _, comment := range Comments {
+		fmt.Println(comment.No)
+		fmt.Println(comment.Contents)
+		fmt.Println()
+	}
 
 }
 
