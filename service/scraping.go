@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 
@@ -30,8 +31,40 @@ type Comment struct {
 	CommentDate string
 }
 
+//Thread はスレッド
+type Thread struct {
+	//ThreadKey はスレッドの文字列 yyyy-mm-dd hh:mm:ss
+	ThreadKey string
+	//Title はスレッド名
+	Title string
+	//isClose は1000まで到達しているか
+	isClose bool
+}
+
 //GetAllHTMLData は全ページのデータ取得
 func GetAllHTMLData(URL string) {
+
+}
+
+//InsertThread はスレッドの挿入
+func InsertThread(URL string) {
+
+}
+
+//GetThreadData はコメントデータの取得
+func GetThreadData(URL string) {
+	targetURL := fmt.Sprintf("%s/%d", URL, 1)
+	reader := GetStream(targetURL)
+	parseThread(reader)
+}
+
+//parseThread はスレッドの解析
+func parseThread(reader io.Reader) {
+
+}
+
+//InsertComment はコメントのinsert
+func InsertComment(URL string) {
 
 	el.Info("--page番号の取得--")
 	targetURL := fmt.Sprintf("%s/a/1", URL)
@@ -39,16 +72,21 @@ func GetAllHTMLData(URL string) {
 	allPageNo := getPageNo(reader)
 	el.Info(`--全page数 ` + allPageNo + `--`)
 
-	//allPageNoInt, _ := strconv.Atoi(allPageNo)
-	//for i := 1; i <= allPageNoInt; i++ {
-	for i := 1; i <= 2; i++ {
+	var maxLoop int
+
+	if os.Getenv("TEST_LOOP") != "" {
+		maxLoop, _ = strconv.Atoi(os.Getenv("DO_TEST"))
+	} else {
+		maxLoop, _ = strconv.Atoi(allPageNo)
+	}
+
+	for i := 1; i <= maxLoop; i++ {
 		strInt := strconv.Itoa(i)
 		el.Info(`--page ` + strInt + `--`)
 		GetCommentData(URL, i)
 	}
 
 	sort.SliceStable(Comments, func(i, j int) bool { return Comments[i].ThreadNo < Comments[j].ThreadNo })
-	fmt.Println(Comments)
 
 	dbConn, err := dbutil.Connect()
 	if err != nil {
@@ -85,7 +123,7 @@ func GetStream(URL string) io.Reader {
 	return reader
 }
 
-//getPageNo はページ番号の取得
+//getPangeNo はページ番号を取得
 func getPageNo(reader io.Reader) string {
 	var pageNo string
 	doc, _ := goquery.NewDocumentFromReader(reader)
@@ -95,11 +133,7 @@ func getPageNo(reader io.Reader) string {
 	return pageNo
 }
 
-/**
- * parseComment はページごとのコメントデータを取得
- * @type io.Reader reader
- * @return string HTMLデータ
- */
+//parseComment はページごとのコメントデータを取得
 func parseComment(reader io.Reader) {
 
 	doc, _ := goquery.NewDocumentFromReader(reader)

@@ -12,6 +12,7 @@ CREATE TABLE threads (
     id  SERIAL PRIMARY KEY,
     thread_key varchar(100) DEFAULT NULL,
     title varchar(100) DEFAULT NULL,
+    is_close boolean DEFAULT false,
     created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
