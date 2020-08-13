@@ -6,6 +6,7 @@ import (
 
 func main() {
 	el.SetLogLevel(el.TRACE)
+	el.SetRotateLog("./logs/%Y/%M/%D.log")
 	el.Info("--scraping start--")
 
 	el.Info("--scraping end--")

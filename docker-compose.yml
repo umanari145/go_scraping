@@ -1,0 +1,38 @@
+version: '3'
+services:
+  app:
+    build:
+      context: ./docker/go
+      dockerfile: Dockerfile
+    volumes:
+      - ".:/go"
+    tty: true
+    environment:
+      - GOPATH=/go/libs
+      - DB_TYPE=postgres
+      - POSTGRES_DBHOST=postgres
+      - POSTGRES_DBNAME=postgres
+      - POSTGRES_DBUSER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "80:80"
+    networks:
+      - goliblang
+  
+  postgres:
+    image: postgres:9.3
+    ports:
+     - "5432:5432"
+    volumes:
+      - "./db:/docker-entrypoint-initdb.d"
+      # 永続化することでコンテナ削除してもOK
+      - "govolumes:/var/lib/postgresql/data"
+    networks:
+     - goliblang
+
+networks:
+  goliblang:
+    driver: "bridge"
+
+volumes: 
+  govolumes:

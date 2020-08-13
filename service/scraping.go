@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"fmt"
+	"go_scraping/dbutil"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -21,17 +22,16 @@ var Comments []Comment
 
 //Comment は１つ１つのコメント
 type Comment struct {
-	//No はコメント番号
-	No string
-	//Contents はコメント番号
+	//ThreadNo はコメント番号
+	ThreadNo string
+	//Contents はコメント本体
 	Contents string
+	//CommentDate はコメントを書き込んだ日
+	CommentDate string
 }
 
 //GetAllHTMLData は全ページのデータ取得
 func GetAllHTMLData(URL string) {
-
-	el.SetLogLevel(el.TRACE)
-	el.SetRotateLog("./%Y/%M/%D.log")
 
 	el.Info("--page番号の取得--")
 	targetURL := fmt.Sprintf("%s/a/1", URL)
@@ -39,22 +39,25 @@ func GetAllHTMLData(URL string) {
 	allPageNo := getPageNo(reader)
 	el.Info(`--全page数 ` + allPageNo + `--`)
 
-	allPageNoInt, _ := strconv.Atoi(allPageNo)
-	for i := 1; i <= allPageNoInt; i++ {
-		//for i := 1; i <= 2; i++ {
+	//allPageNoInt, _ := strconv.Atoi(allPageNo)
+	//for i := 1; i <= allPageNoInt; i++ {
+	for i := 1; i <= 2; i++ {
 		strInt := strconv.Itoa(i)
 		el.Info(`--page ` + strInt + `--`)
 		GetCommentData(URL, i)
 	}
 
-	sort.SliceStable(Comments, func(i, j int) bool { return Comments[i].No < Comments[j].No })
+	sort.SliceStable(Comments, func(i, j int) bool { return Comments[i].ThreadNo < Comments[j].ThreadNo })
+	fmt.Println(Comments)
 
-	for _, comment := range Comments {
-		fmt.Println(comment.No)
-		fmt.Println(comment.Contents)
-		fmt.Println()
+	dbConn, err := dbutil.Connect()
+	if err != nil {
+		el.Fatal("Cannnot Connect DB")
 	}
 
+	for _, eachComment := range Comments {
+		dbConn.Create(&eachComment)
+	}
 }
 
 //GetCommentData はコメントデータの取得
@@ -102,12 +105,14 @@ func parseComment(reader io.Reader) {
 	doc, _ := goquery.NewDocumentFromReader(reader)
 	doc.Find("#thread_c article").Each(func(_ int, s *goquery.Selection) {
 		CommentData := Comment{}
-		commentNo, _ := s.Find(".fancybox_com").Attr("title")
+		threadNo, _ := s.Find(".fancybox_com").Attr("title")
 		rawData := s.Find(".res").Text()
+		commentDate := s.Find(".date").Text()
 		strippedData := strip.StripTags(rawData)
 
-		CommentData.No = commentNo
+		CommentData.ThreadNo = threadNo
 		CommentData.Contents = strippedData
+		CommentData.CommentDate = commentDate
 		Comments = append(Comments, CommentData)
 	})
 }
