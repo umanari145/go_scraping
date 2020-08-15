@@ -69,6 +69,8 @@ func InsertComment(threadID int) {
 
 	var maxLoop int
 
+	fmt.Println(allPageNo)
+
 	if os.Getenv("TEST_LOOP") != "" {
 		maxLoop, _ = strconv.Atoi(os.Getenv("DO_TEST"))
 	} else {
@@ -77,11 +79,8 @@ func InsertComment(threadID int) {
 		if maxLoop == 0 {
 			el.Info("取得すべきページはありません。")
 		}
-
 	}
-
 	fmt.Println(maxLoop)
-	os.Exit(0)
 	comments := Comments{}
 	for i := 1; i <= maxLoop; i++ {
 		strInt := strconv.Itoa(i)
@@ -101,6 +100,7 @@ func InsertComment(threadID int) {
 		eachComment.ThreadID = threadID
 		dbConn.Create(&eachComment)
 	}
+
 }
 
 //getThreadURL はスレッドのURLを取得
@@ -194,14 +194,20 @@ func parseComment(reader io.Reader, comments Comments) Comments {
 	doc.Find("#thread_c article").Each(func(_ int, s *goquery.Selection) {
 		CommentData := Comment{}
 		threadNo, _ := s.Find(".fancybox_com").Attr("title")
-		rawData := s.Find(".res").Text()
-		commentDate := s.Find(".date").Text()
-		strippedData := strip.StripTags(rawData)
 
-		CommentData.ThreadNo = threadNo
-		CommentData.Contents = strippedData
-		CommentData.CommentDate = commentDate
-		comments = append(comments, CommentData)
+		threadNoInt, _ := strconv.Atoi(threadNo)
+
+		if threadNoInt > currentMaxComment {
+
+			rawData := s.Find(".res").Text()
+			commentDate := s.Find(".date").Text()
+			strippedData := strip.StripTags(rawData)
+
+			CommentData.ThreadNo = threadNo
+			CommentData.Contents = strippedData
+			CommentData.CommentDate = commentDate
+			comments = append(comments, CommentData)
+		}
 	})
 
 	return comments
