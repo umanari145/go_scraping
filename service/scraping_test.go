@@ -4,12 +4,10 @@ import (
 	"testing"
 )
 
-func TestGetAllHTMLData(t *testing.T) {
-	url := "https://kanto.hostlove.com/fuzoku_chiba/20090316232116"
-	GetAllHTMLData(url)
+func TestGetThreadURL(t *testing.T) {
+	InsertComment(1)
 }
 
-func TestGetCommentData(t *testing.T) {
-	url := "https://kanto.hostlove.com/fuzoku_chiba/20200614174142"
-	GetCommentData(url, 1)
+func TestGetCurrentMaxComment(t *testing.T) {
+	getCurrentMaxComment(1)
 }
