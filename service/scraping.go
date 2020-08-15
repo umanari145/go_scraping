@@ -18,8 +18,8 @@ import (
 	"golang.org/x/net/html/charset"
 )
 
-//Comments はコメント
-var Comments []Comment
+//Comments はCommentの複数形
+type Comments []Comment
 
 //Comment は１つ１つのコメント
 type Comment struct {
@@ -43,24 +43,41 @@ type Thread struct {
 
 //GetAllHTMLData は全ページのデータ取得
 func GetAllHTMLData(URL string) {
+	//InsertThread(URL)
 
+	InsertComment(URL)
 }
 
 //InsertThread はスレッドの挿入
 func InsertThread(URL string) {
-
-}
-
-//GetThreadData はコメントデータの取得
-func GetThreadData(URL string) {
-	targetURL := fmt.Sprintf("%s/%d", URL, 1)
+	/*targetURL := fmt.Sprintf("%s/%d", URL, 1)
 	reader := GetStream(targetURL)
-	parseThread(reader)
+	Thread, err := parseThread(reader)
+	if err != nil {
+		return
+	}
+
+	dbConn, err := dbutil.Connect()
+	if err != nil {
+		el.Fatal("Cannnot Connect DB %s", err.Error)
+		return
+	}
+
+	for _, eachComment := range Comments {
+		dbConn.Create(&eachComment)
+	}
+	*/
 }
 
 //parseThread はスレッドの解析
-func parseThread(reader io.Reader) {
-
+func parseThread(reader io.Reader) Thread {
+	doc, _ := goquery.NewDocumentFromReader(reader)
+	Thread := Thread{}
+	doc.Find("#thread_top").Each(func(_ int, s *goquery.Selection) {
+		threadTitle := s.Find("h1").Text()
+		Thread.Title = threadTitle
+	})
+	return Thread
 }
 
 //InsertComment はコメントのinsert
@@ -80,29 +97,32 @@ func InsertComment(URL string) {
 		maxLoop, _ = strconv.Atoi(allPageNo)
 	}
 
+	comments := Comments{}
 	for i := 1; i <= maxLoop; i++ {
 		strInt := strconv.Itoa(i)
 		el.Info(`--page ` + strInt + `--`)
-		GetCommentData(URL, i)
+		comments = GetCommentData(comments, URL, i)
 	}
 
-	sort.SliceStable(Comments, func(i, j int) bool { return Comments[i].ThreadNo < Comments[j].ThreadNo })
+	sort.SliceStable(comments, func(i, j int) bool { return comments[i].ThreadNo < comments[j].ThreadNo })
 
 	dbConn, err := dbutil.Connect()
 	if err != nil {
 		el.Fatal("Cannnot Connect DB")
 	}
+	defer dbConn.Close()
 
-	for _, eachComment := range Comments {
+	for _, eachComment := range comments {
 		dbConn.Create(&eachComment)
 	}
 }
 
 //GetCommentData はコメントデータの取得
-func GetCommentData(URL string, pageNo int) {
+func GetCommentData(comments Comments, URL string, pageNo int) Comments {
 	targetURL := fmt.Sprintf("%s/%d", URL, pageNo)
 	reader := GetStream(targetURL)
-	parseComment(reader)
+	comments = parseComment(reader, comments)
+	return comments
 }
 
 //GetStream はストリームデータの取得
@@ -134,7 +154,7 @@ func getPageNo(reader io.Reader) string {
 }
 
 //parseComment はページごとのコメントデータを取得
-func parseComment(reader io.Reader) {
+func parseComment(reader io.Reader, comments Comments) Comments {
 
 	doc, _ := goquery.NewDocumentFromReader(reader)
 	doc.Find("#thread_c article").Each(func(_ int, s *goquery.Selection) {
@@ -147,6 +167,8 @@ func parseComment(reader io.Reader) {
 		CommentData.ThreadNo = threadNo
 		CommentData.Contents = strippedData
 		CommentData.CommentDate = commentDate
-		Comments = append(Comments, CommentData)
+		comments = append(comments, CommentData)
 	})
+
+	return comments
 }
