@@ -1,11 +1,12 @@
 version: '3'
 services:
-  app:
+  server:
+    container_name: "server"
     build:
       context: ./docker/go
       dockerfile: Dockerfile
     volumes:
-      - ".:/go"
+      - "./server:/go"
     tty: true
     environment:
       - GOPATH=/go/libs
@@ -19,6 +20,19 @@ services:
     networks:
       - goliblang
   
+  front:
+    container_name: "front"
+    build:
+      context: ./docker/front
+      dockerfile: Dockerfile
+    volumes:
+        - .:/var/www/html
+    tty: true
+    ports:
+        - "8080:8080"
+    networks:
+      - goliblang
+
   postgres:
     image: postgres:9.3
     ports:
